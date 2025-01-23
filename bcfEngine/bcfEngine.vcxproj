@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{be5ed7b3-4ebb-4b5b-9ad4-2d9c58801dfc}</ProjectGuid>
+    <RootNamespace>bcfEngine</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(ProjectDir)..\output\</OutDir>
+    <IntDir>$(ProjectDir)..\output\obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(ProjectDir)..\output\</OutDir>
+    <IntDir>$(ProjectDir)..\output\obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_HAS_STD_BYTE=0;_DEBUG;_WINDOWS;_USRDLL;SMOKE_TEST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(ProjectDir)libzip\libzip.1.1.2.7\build\native\include\</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+      <AdditionalLibraryDirectories>$(ProjectDir)libzip\libzip.1.1.2.7\build\native\lib\$(Platform)\v140\Release</AdditionalLibraryDirectories>
+      <AdditionalDependencies>zip.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>InstallZipLib.bat "$(ProjectDir)" $(Platform) "$(OutputPath)"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Install libzip</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_HAS_STD_BYTE=0;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(ProjectDir)libzip\libzip.1.1.2.7\build\native\include\</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+      <AdditionalLibraryDirectories>$(ProjectDir)libzip\libzip.1.1.2.7\build\native\lib\$(Platform)\v140\Release</AdditionalLibraryDirectories>
+      <AdditionalDependencies>zip.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>InstallZipLib.bat "$(ProjectDir)" $(Platform) "$(OutputPath)"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Install libzip</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="Archivator.h" />
+    <ClInclude Include="bcfEngine.h" />
+    <ClInclude Include="BCFObject.h" />
+    <ClInclude Include="BCFProject.h" />
+    <ClInclude Include="bcfTypes.h" />
+    <ClInclude Include="BCFFile.h" />
+    <ClInclude Include="BCFBimSnippet.h" />
+    <ClInclude Include="BCFBitmap.h" />
+    <ClInclude Include="BCFClippingPlane.h" />
+    <ClInclude Include="BCFColoring.h" />
+    <ClInclude Include="BCFComment.h" />
+    <ClInclude Include="BCFComponent.h" />
+    <ClInclude Include="BCFDocumentReference.h" />
+    <ClInclude Include="Extensions.h" />
+    <ClInclude Include="FileSystem.h" />
+    <ClInclude Include="framework.h" />
+    <ClInclude Include="GuidStr.h" />
+    <ClInclude Include="GuidReference.h" />
+    <ClInclude Include="BCFLine.h" />
+    <ClInclude Include="Log.h" />
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="SmokeTest.h" />
+    <ClInclude Include="XMLPoint.h" />
+    <ClInclude Include="ProjectInfo.h" />
+    <ClInclude Include="BCFTopic.h" />
+    <ClInclude Include="ListOf.h" />
+    <ClInclude Include="Version.h" />
+    <ClInclude Include="BCFViewPoint.h" />
+    <ClInclude Include="XMLFile.h" />
+    <ClInclude Include="XMLparser\_errors.h" />
+    <ClInclude Include="XMLparser\_io.h" />
+    <ClInclude Include="XMLparser\_log.h" />
+    <ClInclude Include="XMLparser\_net.h" />
+    <ClInclude Include="XMLparser\_reader.h" />
+    <ClInclude Include="XMLparser\_schema_storage.h" />
+    <ClInclude Include="XMLparser\_serialization.h" />
+    <ClInclude Include="XMLparser\_string.h" />
+    <ClInclude Include="XMLparser\_time.h" />
+    <ClInclude Include="XMLparser\_xml.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Archivator.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="BCFBimSnippet.cpp" />
+    <ClCompile Include="BCFBitmap.cpp" />
+    <ClCompile Include="BCFClippingPlane.cpp" />
+    <ClCompile Include="BCFColoring.cpp" />
+    <ClCompile Include="BCFDocumentReference.cpp" />
+    <ClCompile Include="bcfEngine.cpp" />
+    <ClCompile Include="BCFLine.cpp" />
+    <ClCompile Include="GuidReference.cpp" />
+    <ClCompile Include="ListOf.cpp" />
+    <ClCompile Include="BCFObject.cpp" />
+    <ClCompile Include="BCFProject.cpp" />
+    <ClCompile Include="BCFFile.cpp" />
+    <ClCompile Include="BCFComment.cpp" />
+    <ClCompile Include="BCFComponent.cpp" />
+    <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="Extensions.cpp" />
+    <ClCompile Include="FileSystem.cpp" />
+    <ClCompile Include="GuidStr.cpp" />
+    <ClCompile Include="Log.cpp" />
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="SmokeTest.cpp" />
+    <ClCompile Include="XMLPoint.cpp" />
+    <ClCompile Include="ProjectInfo.cpp" />
+    <ClCompile Include="BCFTopic.cpp" />
+    <ClCompile Include="Version.cpp" />
+    <ClCompile Include="BCFViewPoint.cpp" />
+    <ClCompile Include="XMLFile.cpp" />
+    <ClCompile Include="XMLparser\_net.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="XMLparser\_reader.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="XMLparser\_serialization.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="XMLparser\_xml.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="InstallZipLib.bat" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+  </Target>
+</Project>

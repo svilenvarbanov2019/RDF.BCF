@@ -1,4 +1,5 @@
 ﻿
+using System.Diagnostics;
 using System.Xml.Linq;
 
 namespace CSExample
@@ -7,130 +8,93 @@ namespace CSExample
     {
         static void Main(string[] args)
         {
-            try
-            {
-                CreateExample();
-                ReadExample();
-            }
-            catch (RDF.BCF.Exception ex)
-            {
-                Console.WriteLine($"BCF exception {ex.Message}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Generic exception {ex.Message}");
-            }
+            CreateExample();
+            ReadExample();
+
+            SmokeTest.Run();
         }
 
+        /// <summary>
+        /// Example of BCF file creation
+        /// </summary>
         static void CreateExample()
         {
-            using (var bcfData = new RDF.BCF.Project())
+            using (var bcfData = new RDF.BCF.Project("MyProject"))
             {
-                //
-                // init and set options
-                //
-                bcfData.InitNew();
-                bcfData.AutoExtentSchema = true; //I want automatically add new users, project types, statuses etc when use it
-                bcfData.CurrentUser = "igor.o.sokolov@rdf.bg"; //The user will be author will be mentioned in created/modified topics 
+                bcfData.SetAuthor("user@company.org", true);
 
                 //
                 // create topic
                 //
-                var topic = bcfData.Topics.Add(title: "Topic1", topicType: "Test", topicStatus: "New");
-
-                topic.Description = "The wall need plaster layer";
-
-                topic.BIMFiles.Add("c:\\my.ifc");
-
-                //
-                // create comment with viewpoint
-                //
-                var comment = topic.Comments.Add("Look here");
-
-                var viewpoint = CreateViewpointExample(topic);
-
-                comment.Viewpoint = viewpoint;
-
-                //
-                //
-                bcfData.SaveToFile("MyTest.bcf");
-            }
-        }
-
-
-        static RDF.BCF.Viewpoint CreateViewpointExample(RDF.BCF.Topic topic)
-        {
-            var viewpoint = topic.Viewpoints.Add();
-
-            //hide all except one element
-            viewpoint.DefaultVisibility = false;
-            viewpoint.Exceptions = new string[] { "15LX1o$dj1O8G53cOqE8W$" };
-
-            return viewpoint;
-        }
-
-        static void ReadExample()
-        {
-            using (var bcfData = new RDF.BCF.Project())
-            {
-                bcfData.ReadFromFile("MyTest.bcf");
-
-                WorkWithSchemaExtensionsExample(bcfData);
-
-                foreach (var topic in bcfData.Topics.Items)
+                var topic = bcfData.AddTopic("Example", "The example of a topic", "New");
+                if (topic == null)
                 {
-                    //
-                    Console.WriteLine($"Topic {topic.Title} {topic.TopicType} {topic.TopicStatus}");
-                    if (topic.Description != null)
-                    {
-                        Console.WriteLine(topic.Description);
-                    }
+                    Console.WriteLine(bcfData.GetErrors());
+                    return;
+                }
 
-                    //
-                    Console.WriteLine("BIM file paths to load");
-                    foreach (var bim in topic.BIMFiles.Items)
-                    {
-                        Console.WriteLine(bim.Reference);
-                    }
+                topic.Description = "This topic is made to demonstate how to create BCF";
+                topic.AddFile("..\\TestCases\\Architectural.ifc");
 
-                    //
-                    foreach (var comment in topic.Comments.Items)
-                    {
-                        Console.WriteLine(comment.Text ?? "-no message-");
-                        var vp = comment.Viewpoint;
-                        if (vp != null)
-                        {
-                            if (vp.DefaultVisibility)
-                                Console.WriteLine("Show all except: ");
-                            else
-                                Console.WriteLine("Show nothing except: ");
-                            foreach (var id in vp.Exceptions) 
-                            { 
-                                Console.WriteLine($"   {id}");
-                            }
-                        }
-                    }
+                //
+                // create comment
+                //
+                var comment = topic.AddComment();
+                comment.Text = "Look here";
 
+                //
+                // create viewpoint and set for comment
+                //
+                var viewpoint = topic.AddViewPoint();
+                //minimal viewpoint settings
+                viewpoint.SetCameraViewPoint(new RDF.BCF.Interop.BCFPoint());
+                viewpoint.SetCameraDirection(new RDF.BCF.Interop.BCFPoint(1));
+                viewpoint.SetCameraUpVector(new RDF.BCF.Interop.BCFPoint(0, 0, 1));
+                viewpoint.FieldOfView = 90;
+                viewpoint.AspectRatio = 1;
+                //hide all except one element
+                viewpoint.DefaultVisibility = false;   
+                viewpoint.AddException("15LX1o$dj1O8G53cOqE8W$");
+
+                comment.ViewPoint = viewpoint;
+
+                //
+                //
+                bcfData.FileWrite("MyTest.bcf");
+
+                var errors = bcfData.GetErrors();
+                if(errors.Length != 0)
+                {
+                    Console.WriteLine("There were errors: " + errors);
                 }
             }
         }
 
 
-        static void WorkWithSchemaExtensionsExample(RDF.BCF.Project project)
+        /// <summary>
+        /// Example of BCF file reading and printing all topics and comments
+        /// </summary>
+        static void ReadExample()
         {
-            RDF.BCF.Extensions schema = project.Extensions;
+            using (var bcfData = new RDF.BCF.Project())
+            {
+                if (!bcfData.FileRead("MyTest.bcf")) {
+                    Console.WriteLine($"Failed to read BCF file: {bcfData.GetErrors()}");
+                    return;
+                }
 
-            //registered
-            IEnumerable<string> users = schema.GetEnumeration(RDF.BCF.Extensions.Enum.Users);
-            Console.Write("Users: ");
-            foreach (string user in users) 
-            { 
-                Console.Write($"{user}, ");
+                foreach (var topic in bcfData.GetTopics())
+                {
+                    Console.WriteLine($"Topic '{topic.Title}', type: {topic.TopicType}, status: {topic.TopicStatus}");
+                    Console.WriteLine($"By {topic.CreationAuthor} {topic.CreationDate} {topic.ModifiedAuthor} {topic.ModifiedDate}");
+                    Console.WriteLine($"{topic.Description}");
+
+                    foreach (var comment in topic.GetComments())
+                    {
+                        Console.WriteLine($"  Comment by {comment.Author} {comment.Date}: {comment.Text}");
+                    }
+                }
             }
-            Console.WriteLine();
-
-            //
-            schema.AddEnumerationElement(RDF.BCF.Extensions.Enum.TopicStatuses, "Assigned");
         }
     }
 }

@@ -9,10 +9,16 @@
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition=" '$(Configuration)' == 'Debug' ">
     <Reference Include="RDF.BCF">
       <HintPath>..\output\Debug\net8.0\RDF.BCF.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(Configuration)' == 'Release' ">
+     <Reference Include="RDF.BCF">
+      <HintPath>..\output\Release\net8.0\RDF.BCF.dll</HintPath>
+      </Reference>
   </ItemGroup>
 
 </Project>

@@ -9,49 +9,36 @@ namespace RDF.BCF
     public class Extensions
     {
         /// <summary>
-        /// Types of BCF enumerations 
-        /// </summary>
-        public enum Enum
-        {
-            Users,
-            TopicTypes,
-            TopicStatuses,
-            Priorities,
-            TopicLabels,
-            SnippetTypes,
-            Stages
-        }
-
-        /// <summary>
         /// Get elements of enumeration of given type
         /// </summary>
-        public IEnumerable<string> GetEnumeration(Enum enumeration)
+        public List<string> GetElements(Interop.BCFEnumeration enumeration)
         {
-            return new string[] { $"{enumeration}_A", $"{enumeration}_B"};
+            var list = new List<string>();
+            UInt16 index = 0;
+            string elem;
+            while (""!=(elem = Interop.EnumerationElementGet(m_project.Handle, enumeration, index++))){
+                list.Add(elem);
+            }
+            return list;
         }
 
         /// <summary>
-        /// Modify enumeration of given type
+        /// Add element to the enumeration of given type
         /// </summary>
-        public void AddEnumerationElement (Enum enumeration, string elem)
+        public bool AddElement (Interop.BCFEnumeration enumeration, string elem)
         {
+            return Interop.EnumerationElementAdd(m_project.Handle, enumeration, elem);
         }
 
         /// <summary>
-        /// Modify elements of enumeration of given type
+        /// Remove element from the enumeration of given type
         /// </summary>
-        public void RemoveEnumerationElement (Enum enumeration, string elem)
+        public bool RemoveElement (Interop.BCFEnumeration enumeration, string elem)
         {
+            return Interop.EnumerationElementRemove(m_project.Handle, enumeration, elem);
         }
 
-        /// <summary>
-        /// Read enumerations form an XML file which follows BCF schema extensions.xsd 
-        /// </summary>
-        public void LoadExtensions (string filePath, bool append)
-        {
-        }
-
-        #region IMPLEMENTATION
+        #region INTERNAL
         ///////////////////////////////////////////////////////////////////////////////////////////
         ///
         private Project m_project;
@@ -61,6 +48,6 @@ namespace RDF.BCF
             m_project = project;
         }
 
-        #endregion IMPLEMENTATION
+        #endregion INTERNAL
     }
 }
