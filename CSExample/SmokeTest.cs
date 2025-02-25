@@ -42,7 +42,7 @@ namespace CSExample
 
 #if DEBUG
             Console.WriteLine("Dataset test");
-            SmokeTest_DataSet("W:\\DevArea\\buildingSMART\\BCF-XML\\Test Cases\\v3.0");
+            SmokeTest_DataSet("W:\\DevArea\\buildingSMART\\BCF-XML\\Test Cases");
 #endif
 
             Console.WriteLine("TESTS PASSED");
@@ -70,11 +70,13 @@ namespace CSExample
         {
             using (var bcf = new RDF.BCF.Project())
             {
+                ASSERT(!bcf.IsModified);
+
                 var errors = bcf.GetErrors();
                 ASSERT(errors.Length == 0);
 
                 Console.WriteLine("Expected errors....");
-                var res = bcf.FileRead("J:\\NotExist.bcf");
+                var res = bcf.FileRead("J:\\NotExist.bcf", false);
                 ASSERT(!res);
 
                 errors = bcf.GetErrors(false);
@@ -117,8 +119,9 @@ namespace CSExample
         {
             using (var bcf = new RDF.BCF.Project())
             {
-                var res = bcf.FileRead("..\\TestCases\\кИрилица.bcf");
+                var res = bcf.FileRead("..\\TestCases\\кИрилица.bcf", false);
                 ASSERT(res);
+                ASSERT(!bcf.IsModified);
 
                 var name = bcf.Name;
                 ASSERT(name == "BCF 3.0 test cases");
@@ -128,13 +131,15 @@ namespace CSExample
                 TestTopics(bcf);
                 CheckExtensions(bcf);
 
+                ASSERT(bcf.IsModified);
                 var ok = bcf.FileWrite("Кирилица.bcf");
                 ASSERT(ok);
+                ASSERT(!bcf.IsModified);
             }
 
             using (var bcf = new Project())
             {
-                var res = bcf.FileRead("Кирилица.bcf");
+                var res = bcf.FileRead("Кирилица.bcf", false);
                 ASSERT(res);
 
                 CheckExtensions(bcf);
@@ -214,7 +219,7 @@ namespace CSExample
             ASSERT(ex);
 
             //
-            bcf.SetAuthor(chinaUser, false);
+            bcf.SetOptions(chinaUser, false);
 
             Console.WriteLine("Expected exception - author unknown");
             ex = false;
@@ -233,13 +238,17 @@ namespace CSExample
             ASSERT(items.Count() == 1);
 
             //
-            bcf.SetAuthor(chinaUser, true);
+            bcf.SetOptions(chinaUser, true);
 
             topic = bcf.AddTopic("Topic Type", "Topic Title", "Topic Status");
             ASSERT(topic != null);
 
             if (topic != null)
             {
+                topic.SetRelatedTopics(items);
+
+                ASSERT(topic.GetRelatedTopics().Count==1);
+
                 ASSERT(topic.ServerAssignedId.Length == 0);
                 var stat = topic.TopicStatus;
                 ASSERT(stat == "Topic Status");
@@ -249,11 +258,17 @@ namespace CSExample
             items = bcf.GetTopics();
             ASSERT(items.Count() == 2);
             topic = items.First();
+            var topic2 = items[1];
+
+            ASSERT(topic2.GetRelatedTopics().Count == 1);
+            ASSERT(topic2.GetRelatedTopics()[0].Guid == topic.Guid);
 
             //
             // remove
             //
             topic.Remove();
+
+            ASSERT(topic2.GetRelatedTopics().Count == 0);
         }
 
         static void TestBitmaps(Project bcf)
@@ -290,7 +305,7 @@ namespace CSExample
         {
             using (var bcf = new RDF.BCF.Project("MyProject"))
             {
-                bool ok = bcf.SetAuthor("Smoke-tester", true);
+                bool ok = bcf.SetOptions("Smoke-tester", true);
                 ASSERT(ok);
 
                 SetTopicAttributes(bcf);
@@ -303,12 +318,12 @@ namespace CSExample
 
             using (var bcf = new RDF.BCF.Project())
             {
-                var ok = bcf.FileRead("TopicsTest.bcf");
+                var ok = bcf.FileRead("TopicsTest.bcf", false);
                 ASSERT(ok);
 
                 var i = CheckTopicAttributes(bcf, true);
 
-                bcf.SetAuthor("Smoke-Editor", true);
+                bcf.SetOptions("Smoke-Editor", true);
 
                 bcf.GetTopics()[i].Title = "Modified title";
 
@@ -320,7 +335,7 @@ namespace CSExample
 
             using (var bcf = new RDF.BCF.Project())
             {
-                var ok = bcf.FileRead("TopicsTest2.bcf");
+                var ok = bcf.FileRead("TopicsTest2.bcf", false);
                 ASSERT(ok);
 
                 CheckTopicAttributes(bcf, false);
@@ -334,7 +349,7 @@ namespace CSExample
 
         static private string TestGuid(int i)
         {
-            return $"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa{i}";
+            return $"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa{i/10}{i%10}";
         }
 
         static private string TestIfcGuid(int i)
@@ -361,22 +376,27 @@ namespace CSExample
                 topic.Stage = "Stage";
                 topic.Index = 7;
 
-                for (int j = 0; j < 4; j++)
+                for (int j = 0; j < 12; j++)
                 {
+                    string filePath = TestFile((j % 3 == 0) ? "ifc" : "png");
+                    bool isExternal = (j%5==0);
+
                     if (j % 2 == 0)
                     {
-                        var reference = topic.AddDocumentRefernce("hTtp://lala", TestGuid(j));
+                        var reference = topic.AddDocumentRefernce(filePath, isExternal, TestGuid(j));
                         reference.Description = ($"Descr {j}");
                     }
                     else
                     {
                         var reference = topic.AddDocumentRefernce("ftp://ee");
-                        reference.UrlPath = "ftP://changed";
+                        reference.SetFilePath("");
+                        ASSERT(reference.FilePath.Length==0);
+                        reference.SetFilePath (filePath, isExternal);
                     }
                 }
-                ASSERT(topic.GetDocumentReferences().Count == 4);
-                ASSERT(topic.GetDocumentReferences()[3].Remove());
-                ASSERT(topic.GetDocumentReferences().Count == 3);
+                ASSERT(topic.GetDocumentReferences().Count == 12);
+                ASSERT(topic.GetDocumentReferences()[11].Remove());
+                ASSERT(topic.GetDocumentReferences().Count == 11);
 
                 ASSERT(topic.GetBimSnippet(false) == null);
                 ASSERT(topic.GetBimSnippet(true) != null);
@@ -463,19 +483,28 @@ namespace CSExample
                     ASSERT(topic.ModifiedAuthor == "Smoke-Editor");
                 }
 
-                ASSERT(topic.GetDocumentReferences().Count == 3);
-                for (int j = 0; j < 3; j++)
+                ASSERT(topic.GetDocumentReferences().Count == 11);
+                for (int j = 0; j < 11; j++)
                 {
+                    string filePath = TestFile((j % 3 == 0) ? "ifc" : "png");
+                    bool isExternal = (j % 5 == 0);
+
                     var reference = topic.GetDocumentReferences()[j];
+                    if (isExternal)
+                    {
+                        ASSERT(reference.FilePath == filePath);
+                    }
+                    else
+                    {
+                        ASSERT(reference.FilePath.Substring(reference.FilePath.Length-13)==filePath.Substring(filePath.Length-13));
+                    }
                     if (j % 2 == 0)
                     {
-                        ASSERT(reference.UrlPath == "hTtp://lala"); 
                         ASSERT(reference.Guid ==     TestGuid(j));
                         ASSERT(reference.Description == ($"Descr {j}"));
                     }
                     else
                     {
-                        ASSERT(reference.UrlPath == "ftP://changed");
                         ASSERT(reference.Guid.Length > 0);
                         ASSERT(reference.Description.Length == 0);
                     }
@@ -500,7 +529,7 @@ namespace CSExample
         {
             using (var bcf = new RDF.BCF.Project("MyProject"))
             {
-                bool ok = bcf.SetAuthor("Smoke-tester", true);
+                bool ok = bcf.SetOptions("Smoke-tester", true);
                 ASSERT(ok);
 
                 SetCommentAndViewPoints(bcf);
@@ -512,12 +541,12 @@ namespace CSExample
 
             using (var bcf = new Project())
             {
-                bool ok = bcf.FileRead("TestCommentsVP.bcf");
+                bool ok = bcf.FileRead("TestCommentsVP.bcf", false);
                 ASSERT(ok);
 
                 CheckCommentAndViewPoints(bcf, true, false);
 
-                ok = bcf.SetAuthor("Smoke-Editor", true);
+                ok = bcf.SetOptions("Smoke-Editor", true);
                 ASSERT(ok);
 
                 bcf.GetTopics()[0].GetComments()[0].Text = "Modified text";
@@ -530,7 +559,7 @@ namespace CSExample
 
             using (var bcf = new Project())
             {
-                bool ok = bcf.FileRead("TestCommentsVP2.bcf");
+                bool ok = bcf.FileRead("TestCommentsVP2.bcf", false);
                 ASSERT(ok);
 
                 CheckCommentAndViewPoints(bcf, true, true);
@@ -557,6 +586,14 @@ namespace CSExample
 
             comment.Text = "Text comment";
             comment.ViewPoint = topic.GetViewPoints()[0];
+
+            //can't comment used viewpoint
+            var cnt = topic.GetViewPoints().Count;
+            var res = comment.ViewPoint.Remove();
+            ASSERT(!res);
+            var str = bcf.GetErrors();
+            ASSERT(str.Length != 0);
+            ASSERT(topic.GetViewPoints().Count == cnt);       
         }
 
         static void CheckCommentAndViewPoints(Project bcf, bool read, bool modified)
@@ -650,7 +687,7 @@ namespace CSExample
                 else
                 {
                     ASSERT(file.Filename == "Architectural.ifc");
-                    ASSERT(file.Date.Length == 25);
+                    ASSERT(file.Date.Length > 0);
                 }
                 if (isExternal)
                 {
@@ -901,7 +938,7 @@ namespace CSExample
         {
             using (var bcf = new Project("MyTset"))
             {
-                bcf.SetAuthor("me", true);
+                bcf.SetOptions("me", true);
 
                 var topic = bcf.AddTopic("", "B", "C");
 
@@ -1020,7 +1057,7 @@ namespace CSExample
                 ASSERT(err.Contains("Missed property"));
                 ASSERT(err.Contains("Url"));
 
-                docref.UrlPath = "http://ss";
+                docref.SetFilePath ("http://ss");
                 ok = bcf.FileWrite("Validation.bcf");
                 ASSERT(ok);
             }
@@ -1030,7 +1067,7 @@ namespace CSExample
         {
             using (var project = new Project("TestListAttr"))
             {
-                project.SetAuthor("creator", true);
+                project.SetOptions("creator", true);
 
                 for (int i = 0; i < 7; i++)
                 {
@@ -1049,7 +1086,7 @@ namespace CSExample
 
             using (var project = new Project("ddd"))
             {
-                var ok = project.FileRead("TestListAttr.bcf");
+                var ok = project.FileRead("TestListAttr.bcf", false);
                 ASSERT(ok);
 
                 CheckTopicLists(project, 3, 7);
@@ -1075,7 +1112,7 @@ namespace CSExample
             topic.SetRelatedTopics(refs);
         }
 
-            static void CheckTopicLists(Project project, int A, int B)
+        static void CheckTopicLists(Project project, int A, int B)
         {
             var topic = project.GetTopics().First();
 

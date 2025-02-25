@@ -3,6 +3,11 @@
     public class Project : IDisposable
     {
         /// <summary>
+        /// Was the project modified since read, write or create
+        /// </summary>
+        public bool IsModified { get { return Interop.ProjectIsModified(m_handle); } }
+
+        /// <summary>
         /// Creates new empty BCF data.
         /// </summary>
         public Project(string? projectId = null)
@@ -15,16 +20,16 @@
         /// </summary>
         public string GetErrors(bool cleanLog = true)
         {
-            return BCF.Interop.ErrorsGet(m_handle, cleanLog);
+            return BCF.Interop.GetErrors(m_handle, cleanLog);
         }
 
         /// <summary>
         /// Reads BCF data from given BCF XML file.
         /// Data can be modified after reading.
         /// </summary>
-        public bool FileRead(string filePath)
+        public bool FileRead(string filePath, bool autofix)
         {
-            return BCF.Interop.FileRead(m_handle, filePath);
+            return BCF.Interop.FileRead(m_handle, filePath, autofix);
         }
 
         /// <summary>
@@ -46,9 +51,9 @@
         /// topic type, status etc. when you set the value which is not in enumeration yet.
         /// If the option is disable, it makes strict checking and assigning any unknown elements will rise RDF.BCF.Exception.
         /// </param>
-        public bool SetAuthor(string user, bool autoExtent)
+        public bool SetOptions(string user, bool autoExtent = true, bool validateIfcGuids = false)
         {
-            return BCF.Interop.SetAuthor(m_handle, user, autoExtent);
+            return BCF.Interop.SetOptions(m_handle, user, autoExtent, validateIfcGuids);
         }
 
         /// <summary>
@@ -68,7 +73,8 @@
         {
             var ret = new List<Topic>();
             IntPtr topicHandle = IntPtr.Zero;
-            while ((topicHandle = RDF.BCF.Interop.TopicsIterate(m_handle, topicHandle)) != IntPtr.Zero)
+            UInt16 ind = 0;
+            while ((topicHandle = RDF.BCF.Interop.TopicsGetAt(m_handle, ind++)) != IntPtr.Zero)
             {
                 ret.Add(new Topic(this, topicHandle));
             }
@@ -83,7 +89,7 @@
         {
             IntPtr topicHandle = Interop.TopicAdd(m_handle, type, title, status, guid);
             if (topicHandle == IntPtr.Zero)
-                throw new ApplicationException("Fail to create topic: " + Interop.ErrorsGet(Handle));
+                throw new ApplicationException("Fail to create topic: " + Interop.GetErrors(Handle));
             return new Topic(this, topicHandle);
         }
 
@@ -110,12 +116,12 @@
         {
             if (m_handle != IntPtr.Zero)
             {
-                var remainedErrors = RDF.BCF.Interop.ErrorsGet(m_handle);
+                var remainedErrors = RDF.BCF.Interop.GetErrors(m_handle);
                 System.Diagnostics.Trace.Assert(remainedErrors.Length == 0);
 
                 if (!RDF.BCF.Interop.ProjectDelete(m_handle))
                 {
-                    var errors = RDF.BCF.Interop.ErrorsGet(m_handle);
+                    var errors = RDF.BCF.Interop.GetErrors(m_handle);
                     System.Diagnostics.Trace.Assert(false);
                 }
 

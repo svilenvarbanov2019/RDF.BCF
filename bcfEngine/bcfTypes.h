@@ -4,7 +4,7 @@
 
 
 #ifndef RDFBCF_EXPORT
-    #ifdef _WINDOWS
+    #if defined(_WINDOWS) && !defined(RDFBCF_STATIC)
         #define RDFBCF_EXPORT __declspec(dllimport) 
     #else
         #define RDFBCF_EXPORT  
@@ -23,10 +23,9 @@ extern "C" {
     /// </summary>
     struct BCFProject;
     struct BCFTopic;
-    struct BCFFile;
+    struct BCFBimFile;
     struct BCFViewPoint;
     struct BCFComment;
-    struct BCFFile;
     struct BCFDocumentReference;
     struct BCFComponent;
     struct BCFColoring;
@@ -38,14 +37,10 @@ extern "C" {
     /// <summary>
     /// 
     /// </summary>
-    typedef uint16_t BCFIndex;
-
-    /// <summary>
-    /// 
-    /// </summary>
     enum BCFVersion
     {
         BCFVerNotSupported = 0,
+        BCFVer_2_0 = 20,
         BCFVer_2_1 = 21,
         BCFVer_3_0 = 30
     };
@@ -55,6 +50,7 @@ extern "C" {
     /// </summary>
     enum BCFEnumeration
     {
+        BCFUnknown          = 0,
         BCFTopicTypes       = 1,
         BCFTopicStatuses    = 2,
         BCFPriorities       = 3,
