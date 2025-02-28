@@ -111,10 +111,10 @@ bool Archivator::Unpack(const char* archivePath, const char* folder)
             }
 
             if (fileStat.size > 0) {
-                std::vector<char> buffer(fileStat.size);
+                std::vector<char> buffer((int)fileStat.size);
                 zip_fread(file, &buffer[0], fileStat.size);
 
-                fwrite(&buffer[0], 1, fileStat.size, outFile);
+                fwrite(&buffer[0], 1, (int)fileStat.size, outFile);
             }
 
             fclose(outFile);
