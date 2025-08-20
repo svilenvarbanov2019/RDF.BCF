@@ -24,7 +24,11 @@ void Log::add(Level level, const char* code, const char* detailsFormat, ...)
         char details[1024];
         va_list args;
         va_start(args, detailsFormat);
+#ifdef _WINDOWS
         vsprintf_s(details, detailsFormat, args);
+#else
+        vsnprintf(details, sizeof(details), detailsFormat, args);
+#endif
         va_end(args);
         message.details.assign(details);
     }

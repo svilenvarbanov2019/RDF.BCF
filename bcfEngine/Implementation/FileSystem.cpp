@@ -2,6 +2,7 @@
 #include "FileSystem.h"
 
 #include <filesystem>
+#include <sys/stat.h>
 #include "Log.h"
 
 #define OS_PATH_SEP  '\\'

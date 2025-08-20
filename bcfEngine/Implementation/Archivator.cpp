@@ -2,7 +2,7 @@
 #include "Archivator.h"
 
 #include <filesystem>
-#include "./../bcfEngine/kubazip/zip.h"
+#include "../kubazip/zip.h"
 #include "Log.h"
 #include "FileSystem.h"
 
