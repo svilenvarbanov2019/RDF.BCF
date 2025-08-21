@@ -102,7 +102,7 @@ public:
                 found->Remove();
             }
 
-            return SetByGuid::Add(item);
+            return ListOf<Item>::Add(item);
         }
         else {
             assert(false);
