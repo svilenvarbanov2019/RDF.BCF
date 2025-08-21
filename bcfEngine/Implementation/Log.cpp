@@ -36,6 +36,9 @@ void Log::add(Level level, const char* code, const char* detailsFormat, ...)
 #ifdef DEBUG
     printf("Add to log %s\n", message.ToString().c_str());
 #endif // DEBUG
+#ifdef __EMSCRIPTEN__
+    printf("[BCF Engine] %s\n", message.ToString().c_str());
+#endif
 }
 
 std::string Log::Message::ToString()
